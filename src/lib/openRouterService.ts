@@ -1,77 +1,57 @@
 
-import { Language, TestCase } from "./types";
+import { TestCase } from "./types";
 
-const getSystemPrompt = (language: Language) => `
-You are a specialized software testing expert who generates detailed test cases for TestLink based on user stories.
-For each user story, you must generate comprehensive test cases that cover different aspects, edge cases, and user flows.
+const SYSTEM_PROMPT = `
+Vous êtes un expert senior en tests logiciels, spécialisé dans la création de cas de tests détaillés conformes aux bonnes pratiques et adaptés à l'outil TestLink. Votre rôle est de transformer des user stories en cas de tests complets et structurés, prêts à être intégrés directement dans TestLink au format XML.
 
-${language === "fr" ? `
-Vous devez répondre EN FRANÇAIS.
-Pour chaque cas de test, vous devez fournir les champs suivants:
-1. Titre - Un titre clair et concis pour le cas de test
-2. Résumé - Une brève description de ce que le cas de test vérifie
-3. Préconditions - Conditions qui doivent être satisfaites avant l'exécution du test
-4. Étapes - Liste numérotée des étapes pour exécuter le test
-5. Résultats attendus - Liste numérotée des résultats attendus correspondant à chaque étape
-6. Importance - Soit "Low", "Medium", ou "High" selon l'importance du cas de test
-7. Type d'exécution - Soit "Manual" ou "Automated"
+Votre réponse doit être exclusivement en FRANÇAIS et suivre rigoureusement les bonnes pratiques suivantes :
 
-Pensez toujours à tous les scénarios possibles, y compris:
-- Scénarios du chemin heureux (happy path)
-- Cas limites
-- Conditions d'erreur
-- Considérations de sécurité
-- Aspects de performance (si pertinent)
-` : `
-You must respond IN ENGLISH.
-For each test case, you must provide the following fields:
-1. Title - A clear, concise title for the test case
-2. Summary - A brief description of what the test case verifies
-3. Preconditions - Conditions that must be met before the test can be executed
-4. Steps - Numbered list of steps to execute the test
-5. Expected Results - Numbered list of expected outcomes corresponding to each step
-6. Importance - Either "Low", "Medium", or "High" based on the test case's importance
-7. Execution Type - Either "Manual" or "Automated"
+Pour chaque cas de test généré, vous devez fournir précisément ces champs :
 
-Always think about all possible scenarios, including:
-- Happy path scenarios
-- Edge cases
-- Error conditions
-- Security considerations
-- Performance aspects (if relevant)
-`}
+1. Titre : clair, précis et directement lié à la vérification du cas de test.
+2. Résumé : une description succincte de l'objectif exact du cas de test.
+3. Préconditions : les conditions nécessaires à réunir avant d'exécuter le test.
+4. Étapes : liste numérotée détaillée des actions précises à réaliser.
+5. Résultats attendus : liste numérotée correspondant exactement aux résultats attendus pour chaque étape.
+6. Importance : "Low", "Medium" ou "High" selon la criticité du cas de test.
+7. Type d'exécution : "Manual" ou "Automated" en fonction de la faisabilité du cas.
 
-Respond with a **single JSON array** of test cases (start with "[" and end with "]):
-{
-  "title": "Test Case Title",
-  "summary": "Brief description of what this test verifies",
-  "preconditions": "Conditions required before test execution",
-  "steps": ["Step 1", "Step 2", ...],
-  "expectedResults": ["Expected result 1", "Expected result 2", ...],
-  "importance": "Low|Medium|High",
-  "executionType": "Manual|Automated"
-}
+Chaque cas de test doit obligatoirement couvrir :
+- Le scénario nominal (« happy path »)
+- Les cas limites (edge cases)
+- Les scénarios d'erreur possibles
+- Les considérations de sécurité
+- Les aspects liés à la performance (si applicable)
 
-${language === "fr" ? "Votre réponse doit être entièrement en français." : "Your response must be entirely in English."}
+Votre réponse finale doit être fournie exclusivement sous la forme d'un tableau JSON, directement utilisable pour la génération XML vers TestLink :
+
+[
+  {
+    "title": "Titre du cas de test",
+    "summary": "Résumé clair de l'objectif du test",
+    "preconditions": "Conditions préalables nécessaires",
+    "steps": ["Étape 1", "Étape 2", "..."],
+    "expectedResults": ["Résultat attendu 1", "Résultat attendu 2", "..."],
+    "importance": "Low|Medium|High",
+    "executionType": "Manual|Automated"
+  }
+]
+
+N'ajoutez aucun autre texte ni commentaire en dehors du tableau JSON fourni.
 `;
 
 export async function generateTestCases(
   userStory: string,
-  additionalContext: string,
-  language: Language = "en"
+  additionalContext: string
 ): Promise<TestCase[]> {
   try {
-    const systemPrompt = getSystemPrompt(language);
-    
     const prompt = `
-${language === "fr" ? "User Story (Histoire Utilisateur):" : "User Story:"}
+User Story:
 ${userStory}
 
-${additionalContext ? `${language === "fr" ? "Contexte Additionnel:" : "Additional Context:"}\n${additionalContext}\n` : ""}
+${additionalContext ? `Contexte Additionnel:\n${additionalContext}\n` : ""}
 
-${language === "fr" 
-  ? "En fonction de cette histoire utilisateur, générez des cas de test détaillés pour TestLink."
-  : "Based on this user story, generate detailed test cases for TestLink."}
+En fonction de cette histoire utilisateur, générez des cas de test détaillés pour TestLink.
 `;
 
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -85,7 +65,7 @@ ${language === "fr"
       body: JSON.stringify({
         model: "qwen/qwen3-30b-a3b:free", // Using a reliable free model
         messages: [
-          { role: "system", content: systemPrompt },
+          { role: "system", content: SYSTEM_PROMPT },
           { role: "user", content: prompt }
         ],
         temperature: 0.7,
@@ -96,7 +76,7 @@ ${language === "fr"
     const data = await response.json();
     
     if (!response.ok) {
-      throw new Error(data.error?.message || (language === "fr" ? 'Échec de la génération des cas de test' : 'Failed to generate test cases'));
+      throw new Error('Échec de la génération des cas de test');
     }
 
     // Parse the completion content as JSON array
@@ -105,13 +85,13 @@ ${language === "fr"
     // Find JSON array in the response
     const jsonMatch = content.match(/\[[\s\S]*\]/);
     if (!jsonMatch) {
-      throw new Error(language === "fr" ? 'Format de réponse invalide du modèle AI' : 'Invalid response format from AI model');
+      throw new Error('Format de réponse invalide du modèle AI');
     }
     
     const testCases: TestCase[] = JSON.parse(jsonMatch[0]);
     return testCases;
   } catch (error) {
-    console.error("Error generating test cases:", error);
+    console.error("Erreur lors de la génération des cas de test:", error);
     throw error;
   }
 }

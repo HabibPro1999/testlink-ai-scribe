@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Language, TestCase } from '@/lib/types';
+import { TestCase } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -9,10 +9,9 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 interface Props {
   testCase: TestCase;
   index: number;
-  language: Language;
 }
 
-const TestCaseCard: React.FC<Props> = ({ testCase, index, language }) => {
+const TestCaseCard: React.FC<Props> = ({ testCase, index }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const importanceBadgeColor = {
@@ -25,16 +24,6 @@ const TestCaseCard: React.FC<Props> = ({ testCase, index, language }) => {
     testCase.executionType === "Automated" 
       ? "bg-purple-100 text-purple-800" 
       : "bg-green-100 text-green-800";
-      
-  const translations = {
-    showLess: language === "fr" ? "Afficher moins" : "Show less",
-    showDetails: language === "fr" ? "Afficher les détails" : "Show details",
-    summary: language === "fr" ? "Résumé" : "Summary",
-    preconditions: language === "fr" ? "Préconditions" : "Preconditions",
-    testStepsAndResults: language === "fr" ? "Étapes de Test & Résultats Attendus" : "Test Steps & Expected Results",
-    step: language === "fr" ? "Étape" : "Step",
-    expectedResult: language === "fr" ? "Résultat Attendu" : "Expected Result"
-  };
 
   return (
     <Card className="mb-4">
@@ -52,7 +41,7 @@ const TestCaseCard: React.FC<Props> = ({ testCase, index, language }) => {
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <CardContent className="pb-2">
           <div className="mb-3">
-            <h4 className="font-medium text-sm text-gray-500">{translations.summary}</h4>
+            <h4 className="font-medium text-sm text-gray-500">Résumé</h4>
             <p>{testCase.summary}</p>
           </div>
         </CardContent>
@@ -60,12 +49,12 @@ const TestCaseCard: React.FC<Props> = ({ testCase, index, language }) => {
         <CollapsibleTrigger className="flex justify-center w-full py-2 text-sm text-muted-foreground hover:bg-muted/50">
           {isOpen ? (
             <div className="flex items-center">
-              <span>{translations.showLess}</span>
+              <span>Afficher moins</span>
               <ChevronUp className="ml-1 h-4 w-4" />
             </div>
           ) : (
             <div className="flex items-center">
-              <span>{translations.showDetails}</span>
+              <span>Afficher les détails</span>
               <ChevronDown className="ml-1 h-4 w-4" />
             </div>
           )}
@@ -74,21 +63,21 @@ const TestCaseCard: React.FC<Props> = ({ testCase, index, language }) => {
         <CollapsibleContent>
           <CardContent className="pt-2">
             <div className="mb-3">
-              <h4 className="font-medium text-sm text-gray-500">{translations.preconditions}</h4>
+              <h4 className="font-medium text-sm text-gray-500">Préconditions</h4>
               <p>{testCase.preconditions}</p>
             </div>
             
             <div className="mb-3">
-              <h4 className="font-medium text-sm text-gray-500">{translations.testStepsAndResults}</h4>
+              <h4 className="font-medium text-sm text-gray-500">Étapes de Test & Résultats Attendus</h4>
               <div className="border rounded-md divide-y">
                 {testCase.steps.map((step, i) => (
                   <div key={i} className="p-3 flex flex-col md:flex-row">
                     <div className="md:w-1/2 pr-2">
-                      <span className="font-medium text-xs text-gray-500">{translations.step} {i + 1}</span>
+                      <span className="font-medium text-xs text-gray-500">Étape {i + 1}</span>
                       <p className="mt-1">{step}</p>
                     </div>
                     <div className="md:w-1/2 md:border-l pl-2 mt-2 md:mt-0">
-                      <span className="font-medium text-xs text-gray-500">{translations.expectedResult}</span>
+                      <span className="font-medium text-xs text-gray-500">Résultat Attendu</span>
                       <p className="mt-1">{testCase.expectedResults[i]}</p>
                     </div>
                   </div>

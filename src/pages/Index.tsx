@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { generateTestCases } from '@/lib/openRouterService';
-import { Language, TestCase, UserStoryInput } from '@/lib/types';
+import { TestCase, UserStoryInput } from '@/lib/types';
 import UserStoryForm from '@/components/UserStoryForm';
 import TestCaseResults from '@/components/TestCaseResults';
 import { Separator } from '@/components/ui/separator';
@@ -11,30 +11,23 @@ const Index = () => {
   const [testCases, setTestCases] = useState<TestCase[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [currentLanguage, setCurrentLanguage] = useState<Language>("en");
 
   const handleSubmit = async (data: UserStoryInput) => {
     setError(null);
     setLoading(true);
-    setCurrentLanguage(data.language);
 
     try {
-      const generatedTestCases = await generateTestCases(data.userStory, data.additionalContext, data.language);
+      const generatedTestCases = await generateTestCases(data.userStory, data.additionalContext);
       setTestCases(generatedTestCases);
       
-      const successMessage = data.language === "fr" 
-        ? "Cas de test générés avec succès!" 
-        : "Test cases generated successfully!";
-      toast.success(successMessage);
+      toast.success("Cas de test générés avec succès!");
     } catch (err) {
-      console.error("Error generating test cases:", err);
+      console.error("Erreur lors de la génération des cas de test:", err);
       
-      const errorMessage = data.language === "fr"
-        ? "Échec de la génération des cas de test. Veuillez vérifier votre clé API et réessayer."
-        : "Failed to generate test cases. Please check your API key and try again.";
+      const errorMessage = "Échec de la génération des cas de test. Veuillez vérifier votre clé API et réessayer.";
         
       setError(err instanceof Error ? err.message : errorMessage);
-      toast.error(data.language === "fr" ? "Échec de la génération des cas de test" : "Failed to generate test cases");
+      toast.error("Échec de la génération des cas de test");
     } finally {
       setLoading(false);
     }
@@ -44,23 +37,13 @@ const Index = () => {
     setTestCases([]);
   };
 
-  const getHeaderText = () => {
-    return currentLanguage === "fr" ? "TestLink AI Scribe" : "TestLink AI Scribe";
-  };
-
-  const getSubHeaderText = () => {
-    return currentLanguage === "fr" 
-      ? "Générez des cas de test compatibles avec TestLink à partir d'user stories grâce à l'IA" 
-      : "Generate TestLink-compatible test cases from user stories using AI";
-  };
-
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b">
         <div className="container mx-auto py-6">
-          <h1 className="text-3xl font-bold text-center">{getHeaderText()}</h1>
+          <h1 className="text-3xl font-bold text-center">TestLink AI Scribe</h1>
           <p className="text-center text-gray-600 mt-2">
-            {getSubHeaderText()}
+            Générez des cas de test compatibles avec TestLink à partir d'user stories grâce à l'IA
           </p>
         </div>
       </header>
@@ -71,26 +54,14 @@ const Index = () => {
             <div className="max-w-3xl w-full">
               <div className="mb-8">
                 <h2 className="text-xl font-semibold mb-3">
-                  {currentLanguage === "fr" ? "Comment ça marche" : "How it works"}
+                  Comment ça marche
                 </h2>
                 <ol className="list-decimal list-inside space-y-2 text-gray-700">
-                  {currentLanguage === "fr" ? (
-                    <>
-                      <li>Entrez votre user story dans le formulaire ci-dessous</li>
-                      <li>Ajoutez tout contexte supplémentaire qui pourrait être utile</li>
-                      <li>Entrez votre clé API OpenRouter</li>
-                      <li>Générez des cas de test détaillés à l'aide de l'IA</li>
-                      <li>Téléchargez le fichier XML pour l'importation dans TestLink</li>
-                    </>
-                  ) : (
-                    <>
-                      <li>Enter your user story in the form below</li>
-                      <li>Add any additional context that might be helpful</li>
-                      <li>Enter your OpenRouter API key</li>
-                      <li>Generate detailed test cases using AI</li>
-                      <li>Download the XML file for import into TestLink</li>
-                    </>
-                  )}
+                  <li>Entrez votre user story dans le formulaire ci-dessous</li>
+                  <li>Ajoutez tout contexte supplémentaire qui pourrait être utile</li>
+                  <li>Entrez votre clé API OpenRouter</li>
+                  <li>Générez des cas de test détaillés à l'aide de l'IA</li>
+                  <li>Téléchargez le fichier XML pour l'importation dans TestLink</li>
                 </ol>
               </div>
               
@@ -102,16 +73,14 @@ const Index = () => {
             </div>
           </div>
         ) : (
-          <TestCaseResults testCases={testCases} onReset={handleReset} language={currentLanguage} />
+          <TestCaseResults testCases={testCases} onReset={handleReset} />
         )}
       </main>
 
       <footer className="border-t mt-auto">
         <div className="container mx-auto py-6 px-4">
           <p className="text-center text-gray-500 text-sm">
-            {currentLanguage === "fr" 
-              ? `TestLink AI Scribe &copy; ${new Date().getFullYear()} - Utilisant les modèles IA d'OpenRouter`
-              : `TestLink AI Scribe &copy; ${new Date().getFullYear()} - Using OpenRouter AI models`}
+            TestLink AI Scribe &copy; {new Date().getFullYear()} - Utilisant les modèles IA d'OpenRouter
           </p>
         </div>
       </footer>
