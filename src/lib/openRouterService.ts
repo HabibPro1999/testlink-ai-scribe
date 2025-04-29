@@ -79,17 +79,29 @@ En fonction de cette histoire utilisateur, générez des cas de test détaillés
       throw new Error('Échec de la génération des cas de test');
     }
 
-    // Parse the completion content as JSON array
+    // Get the completion content
     const content = data.choices[0].message.content;
+    console.log("AI response content:", content);
     
-    // Find JSON array in the response
-    const jsonMatch = content.match(/\[[\s\S]*\]/);
-    if (!jsonMatch) {
-      throw new Error('Format de réponse invalide du modèle AI');
+    // Extract JSON from content - more robust approach to handle potential text before or after JSON
+    try {
+      // Look for array pattern
+      const jsonStartIndex = content.indexOf('[');
+      const jsonEndIndex = content.lastIndexOf(']') + 1;
+      
+      if (jsonStartIndex === -1 || jsonEndIndex === 0) {
+        throw new Error('Aucun tableau JSON trouvé dans la réponse');
+      }
+      
+      const jsonString = content.substring(jsonStartIndex, jsonEndIndex);
+      console.log("Extracted JSON string:", jsonString);
+      
+      const testCases: TestCase[] = JSON.parse(jsonString);
+      return testCases;
+    } catch (jsonError) {
+      console.error("Erreur d'analyse JSON:", jsonError);
+      throw new Error('Format de réponse invalide. Impossible de parser le JSON.');
     }
-    
-    const testCases: TestCase[] = JSON.parse(jsonMatch[0]);
-    return testCases;
   } catch (error) {
     console.error("Erreur lors de la génération des cas de test:", error);
     throw error;
